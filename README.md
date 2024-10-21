@@ -1,0 +1,158 @@
+# 项目说明
+
+本项目为大一高级语言程序设计大作业。
+
+关于本项目的设计，详见 `9_酒店管理系统.pdf`。
+
+本项目用到了：
+
+- 各种 c++ 基础语法
+- `<string>` 相关操作
+- `<memory>` 中的智能指针
+- 结构体、单链表
+- `<fstream>` 文件读写
+- [ctime库的使用](https://blog.csdn.net/u013043408/article/details/83615582)，以及 `<sstream>` 和 `<iomanip>` 用于读入指定格式的时间
+- 用 `<stdexcept>` 中的 `try-catch` 处理输入信息时的报错
+- mermeid 绘制示意图
+
+
+# 功能模块示意图
+
+```mermaid
+flowchart TD
+    A[菜单，选择操作文件]
+    A-->|命令 1|GUEST[客人]-->B1[选择具体操作]
+    A-->|命令 2|ROOM[客房]-->B2[选择具体操作]
+    A-->|命令 3|SYS_OUT[退出系统]-->SAVE[写入文件]
+
+    B1-->|命令 1|GUEST_QUERY[
+        查询客人信息
+        1.全部客人信息
+        2.指定客人信息
+    ]
+
+    B1-->|命令 2|GUEST_ADD[新增客人信息]
+
+    B1-->|命令 3|GUEST_DEL[用身份证号删除指定客人]
+
+    B1-->|命令 4|GUEST_MOD[
+        用身份证号修改客人信息
+        1.姓名
+        2.是否离开
+        3.入住时间
+        4.离店时间
+        5.住宿房间
+    ]
+
+    B2-->|命令 1|ROOM_QUERY[
+        查询客房信息:
+        1.全部房间信息
+        2.指定房间信息
+        3.指定价格区间
+    ]
+
+    B2-->|命令 2|ROOM_ADD[新增客房信息]
+
+    B2-->|命令 3|ROOM_DEL[用房间号删除指定客房]
+
+    B2-->|命令 4|ROOM_MOD[
+        用房间号修改客房信息
+        1.类型
+        2.价格
+    ]
+
+    END_TURN[一轮操作结束]
+    GUEST_QUERY-->END_TURN
+    GUEST_ADD-->END_TURN
+    GUEST_DEL-->END_TURN
+    GUEST_MOD-->END_TURN
+    ROOM_QUERY-->END_TURN
+    ROOM_ADD-->END_TURN
+    ROOM_DEL-->END_TURN
+    ROOM_MOD-->END_TURN  
+
+    END_TURN-->NEICUN[修改写入内存]-->A
+    SAVE[写入文件]-->END[退出系统]
+```
+
+# 数据结构示意图
+
+```mermaid
+classDiagram
+class Guest{
+    +string ID
+    +string name
+    +time_t checkin_time
+    +time_t checkout_time
+    +double cost
+    +RoomList room
+
+    +operator==()
+    +add_attribute()
+    +calc_cost()
+    +print_info()
+    +print_info(fstream)
+}
+
+class Room{
+    +string ID
+    +string type
+    +double price
+    +bool isOccupied
+
+    +operator==()
+    +add_attribute()
+    +print_info()
+    +print_info(fstream)
+}
+
+class list~T~{
+    +T data
+    +Node* nxt
+}
+
+Guest .. list
+Room  .. list
+```
+
+# 函数调用示意图
+
+```mermaid
+flowchart TD
+    subgraph init
+        direction LR
+        READ1["`read<Room>(ROOMFILE, rl)`"]~~~READ2["`read<Guest>(GUESTFILE, gl)`"]~~~SET[更新房间占用情况]
+    end
+
+    subgraph ui
+        direction LR
+        MENU["`menu()`"]-->OP1["`op_guest_list()`"]
+        MENU-->OP2["`op_room_list()`"]
+
+        OP1-->COMMAND1["`command()`"]
+        COMMAND1-->GUEST_QUERY["`find&lt;Guest&gt;()`"]
+        COMMAND1-->ROOM_QUERY["`find_room()`"]
+        COMMAND1-->GUEST_ADD["`add&lt;Guest&gt;()`"]
+        COMMAND1-->GUEST_DEL["`del&lt;Guest&gt;()`"]
+        COMMAND1-->GUEST_MOD["`Guest.calc_cost()`"]
+        GUEST_QUERY-->GUEST_INFO["`Guest.print_info()`"]
+
+        OP2-->COMMAND2["`command()`"]
+        COMMAND2-->ROOM_QUERY["`find&lt;Room&gt;()`"]
+        COMMAND2-->ROOM_ADD["`add&lt;Room&gt;()`"]
+        COMMAND2-->ROOM_DEL["`del&lt;Room&gt;()`"]
+        ROOM_QUERY-->ROOM_INFO["`Room.print_info()`"]
+    end
+
+    init-->ui
+```
+
+# 致谢
+
+感谢我的组员帮我写了一些代码，还有一个好看的 ui 界面。
+
+可视化因为还没有玩明白所以先不加了。
+
+感谢 fitten code 救我狗命，不然写 `<ctime>` 库的时候我就原地爆炸了。
+
+感谢 github 为了种种原因把默认分支改成 main，让我 `push master` 的时候各种出错最后删了十几次库。
