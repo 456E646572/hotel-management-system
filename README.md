@@ -7,6 +7,7 @@
 本项目用到了：
 
 - 各种 c++ 基础语法
+- `template<typename T>` 的使用
 - `<string>` 相关操作
 - `<memory>` 中的智能指针
 - 结构体、单链表
