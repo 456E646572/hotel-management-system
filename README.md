@@ -4,6 +4,10 @@
 
 关于本项目的设计，详见 `9_酒店管理系统.pdf`。
 
+本项目用到了很多 c++17 的特性，请确保使用的编译器版本够高并使用 `-std=c++17` 编译。
+
+您可以在[这里](https://github.com/niXman/mingw-builds-binaries/releases)在找到最新版本的编译器，跟着[这篇教程](https://zhuanlan.zhihu.com/p/438701242)配置devc++。
+
 本项目用到了：
 
 - 各种 c++ 基础语法
