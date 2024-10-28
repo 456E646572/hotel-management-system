@@ -50,15 +50,18 @@ struct node {
     T data;
     shared_ptr<node<T>> nxt;
 };
-
+ 
+// 房间结构体，包含房间信息及相关操作
 struct Room {
     string ID;
     string type;
     double cost;
     bool isOccupied=false;
+    // 重载等于运算符，用于比较房间
     bool operator == (const Room& other) const {
         return ID == other.ID;
     }
+    // 根据属性ID添加房间属性
     void add_attribute(int att_id, string att) {
         switch (att_id) {
             case 0: ID = att; break;
@@ -67,19 +70,22 @@ struct Room {
             default: break;
         }
     }
+    // 输出房间信息到控制台
     void output_info() {
         cout << "房间号：" << ID << endl;
         cout << "房间类型：" << type << endl;
         cout << "房间价格：" << cost << endl;
         cout << "是否已被占用：" << (isOccupied ? "是" : "否") << endl;
     }
+    // 输出房间信息到文件
     void output_info(ofstream& f) {
         f << ID << " " << type << " " << cost << endl;
     }
 };
 using RoomList = shared_ptr<node<Room>>;
 RoomList rl = make_shared<node<Room>>();
-
+ 
+// 在房间列表中查找指定ID的房间
 RoomList find_room (RoomList rl, string ID) {
     if (ID == NULL_ROOM_ID) { return nullptr; }
     for (auto p = rl->nxt; p!= nullptr; p = p->nxt) {
@@ -89,7 +95,8 @@ RoomList find_room (RoomList rl, string ID) {
     }
     return nullptr;
 }
-
+ 
+// 客人结构体，包含客人信息及相关操作
 struct Guest {
     string ID;
     string name;
@@ -97,9 +104,11 @@ struct Guest {
     time_t checkout_time;
     double cost = 0;
     RoomList room=nullptr;
+    // 重载等于运算符，用于比较客人
     bool operator == (const Guest& other) const {
         return ID == other.ID;
     }
+    // 根据属性ID添加客人属性
     void add_attribute(int att_id, string att) {
         switch (att_id) {
             case 0: ID = att; break;
@@ -111,11 +120,13 @@ struct Guest {
             default: break;
         }
     }
+    // 计算住宿费用
     void calc_cost() {
         if (checkout_time != MAX_TIME) {
             cost = (checkout_time-checkin_time)/3600.0*(room->data.cost);
         }
     }
+    // 输出客人信息到控制台
     void output_info() {
         cout << "客人身份证号：" << ID << endl;
         cout << "客人姓名：" << name << endl;
@@ -124,13 +135,15 @@ struct Guest {
         cout << "住宿费用：" << cost << endl;
         cout << "住宿房间：" << (room == nullptr ? "未指定" : room->data.ID) << endl;
     }
+    // 输出客人信息到文件
     void output_info(ofstream& f) {
         f << ID << " " << name << " " << checkin_time << " " << checkout_time << " " << cost << " " << (room == nullptr? NULL_ROOM_ID : room->data.ID) << endl;
     }
 };
 using GuestList = shared_ptr<node<Guest>>;
 GuestList gl = make_shared<node<Guest>>();
-
+ 
+// 向链表中添加元素
 template <typename T>
 bool add(shared_ptr<node<T>> head, T data) {
     auto p = head;
@@ -142,7 +155,8 @@ bool add(shared_ptr<node<T>> head, T data) {
     p->nxt->nxt = nullptr;
     return true;
 }
-
+ 
+// 从链表中删除元素
 template <typename T>
 bool del(shared_ptr<node<T>> head, T data) {
     for (auto p=head; p->nxt!= nullptr; p = p->nxt) {
@@ -153,7 +167,8 @@ bool del(shared_ptr<node<T>> head, T data) {
     }
     return false;
 }
-
+ 
+// 在链表中查找指定元素
 template <typename T>
 shared_ptr<node<T>> find(shared_ptr<node<T>> head, const T& data) {
     for (auto p=head; p->nxt!= nullptr; p = p->nxt) {
@@ -165,6 +180,7 @@ shared_ptr<node<T>> find(shared_ptr<node<T>> head, const T& data) {
 }
 
 template<typename T>
+// 从指定文件中读取数据并将其添加到链表中
 void read(string selectedFileName, shared_ptr<node<T>> head) {
     ifstream file(selectedFileName);
     if (!file.is_open()) {  
@@ -185,8 +201,9 @@ void read(string selectedFileName, shared_ptr<node<T>> head) {
     }
     file.close();
 }
-
+ 
 template<typename T>
+// 将链表中的数据写入指定文件
 void write(string selectedFileName, shared_ptr<node<T>> head) {
     ofstream outputFile(selectedFileName);  
     if (!outputFile.is_open()) {  
@@ -231,6 +248,7 @@ void command() {
     cout << "请选择：";
 }
 
+// 初始化函数，用于读取房间和客人信息，并标记已占用的房间
 void init() {
     read<Room>(ROOMFILE, rl);
     read<Guest>(GUESTFILE, gl);
@@ -240,7 +258,8 @@ void init() {
         }
     }
 }
-
+ 
+// 查询客人信息的函数，根据用户输入的条目进行查询
 void query_guest()
 {
     cout << "请输入查询条目（1.全部客人信息 2.指定客人信息）：";
@@ -264,7 +283,8 @@ void query_guest()
         }
     }
 }
-
+ 
+// 添加新客人的函数，验证信息并更新数据
 void add_guest()
 {
     string guest_id, guest_name, room_id;
@@ -294,7 +314,8 @@ void add_guest()
         }
     }
 }
-
+ 
+// 删除客人的函数，检查并删除相关信息
 void del_guest()
 {
     cout << "请输入要删除的客人身份证号：";
@@ -309,7 +330,8 @@ void del_guest()
         cout << "该客人不存在！" << endl;
     }
 }
-
+ 
+// 修改客人信息的函数，根据用户输入进行相应的修改
 void modify_guest()
 {
     bool success = false;
@@ -397,7 +419,8 @@ void modify_guest()
         }
     }
 }
-
+ 
+// 操作客人信息列表的函数，根据用户输入的命令调用相应的功能
 void op_guest_list() {
     command();
     string command_id;
@@ -416,6 +439,7 @@ void op_guest_list() {
     }
 }
 
+// 查询房间信息的函数
 void query_room()
 {
     cout << "请输入查询条目（1.全部房间信息 2.指定房间信息 3.指定价格区间）：";
@@ -463,7 +487,8 @@ void query_room()
         cout << "输入错误，请重新输入！" << endl;
     }
 }
-
+ 
+// 添加房间信息的函数
 void add_room()
 {
     cout << "请输入要新增的房间信息：" << endl;
@@ -484,7 +509,8 @@ void add_room()
         } catch (...) { cout << "价格格式错误！" << endl; }
     }
 }
-
+ 
+// 删除房间信息的函数
 void del_room()
 {
     cout << "请输入要删除的房间ID：";
@@ -497,7 +523,8 @@ void del_room()
         cout << "该房间不存在！" << endl;
     }
 }
-
+ 
+// 修改房间信息的函数
 void modify_room()
 {
     cout << "请输入要修改的房间号：";
@@ -534,7 +561,8 @@ void modify_room()
         }
     }
 }
-
+ 
+// 操作房间列表的函数，处理用户命令
 void op_room_list() {
     command();
     string command_id;
@@ -551,6 +579,7 @@ void op_room_list() {
     }
 }
 
+// 用户界面函数，提供操作菜单并处理用户输入
 void ui() {
     while (1) {
         system("cls");
@@ -574,6 +603,7 @@ void ui() {
     system("pause");
 }
 
+// 主函数，程序入口
 int main() {
     init();
     ui();
