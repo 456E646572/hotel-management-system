@@ -6,7 +6,7 @@
 
 本项目用到了很多 c++17 的特性，请确保使用的编译器版本够高并使用 `-std=c++17` 编译。
 
-您可以在[这里](https://github.com/niXman/mingw-builds-binaries/releases)在找到最新版本的编译器，跟着[这篇教程](https://zhuanlan.zhihu.com/p/438701242)配置devc++。
+如果您是旧版 devc++ 受害者，您可以在[这里](https://github.com/niXman/mingw-builds-binaries/releases)在找到最新版本的编译器，并跟着[这篇教程](https://zhuanlan.zhihu.com/p/438701242)配置devc++。
 
 本项目用到了：
 
@@ -125,31 +125,88 @@ Room  .. list
 ```mermaid
 flowchart TD
     subgraph init
-        direction LR
         READ1["`read<Room>(ROOMFILE, rl)`"]~~~READ2["`read<Guest>(GUESTFILE, gl)`"]~~~SET[更新房间占用情况]
+    end
+
+    subgraph END
+        WRITE1["`write<Room>(ROOMFILE, rl)`"]~~~WRITE2["`write<Guest>(GUESTFILE, gl)`"]
+    end
+
+    subgraph data_GUEST
+        GUEST_QUERY["`find&lt;Guest&gt;()`"]
+        GUEST_ADD["`add&lt;Guest&gt;()`"]
+        GUEST_DEL["`del&lt;Guest&gt;()`"]
+        GUEST_MOD["`Guest.calc_cost()`"]
+        GUEST_INFO["`Guest.print_info()`"]
+        GUEST_CALC["`Guest.calc_cost()`"]
+    end
+
+    subgraph data_ROOM
+        ROOM_QUERY["`find&lt;Room&gt;()`"]
+        ROOM_ADD["`add&lt;Room&gt;()`"]
+        ROOM_DEL["`del&lt;Room&gt;()`"]
+        ROOM_QUERY["`find_room()`"]
+        ROOM_INFO["`Room.print_info()`"]
+    end
+
+    subgraph data
+        data_GUEST
+        data_ROOM
+    end
+
+    subgraph OP_GUEST
+        COMMAND1["`command()`"]
+        COMMAND1-->OP_GUEST_QUERY["`query_guest()`"]
+        COMMAND1-->OP_GUEST_ADD["`add_guest()`"]
+        COMMAND1-->OP_GUEST_DEL["`del_guest()`"]
+        COMMAND1-->OP_GUEST_MOD["`modify_guest()`"]
+
+        OP_GUEST_QUERY-->GUEST_QUERY
+        OP_GUEST_QUERY-->GUEST_INFO
+        
+        OP_GUEST_ADD-->GUEST_QUERY
+        OP_GUEST_ADD-->GUEST_ADD
+        OP_GUEST_ADD-->GUEST_INFO
+
+        OP_GUEST_DEL-->GUEST_QUERY
+        OP_GUEST_DEL-->GUEST_DEL
+
+        OP_GUEST_MODIFY-->GUEST_QUERY
+        OP_GUEST_MODIFY-->ROOM_QUERY
+        OP_GUEST_MODIFY-->GUEST_CALC
+        OP_GUEST_MODIFY-->GUEST_INFO
+    end
+
+    subgraph OP_ROOM
+        COMMAND2["`command()`"]
+        COMMAND2-->OP_ROOM_QUERY["`query_room()`"]
+        COMMAND2-->OP_ROOM_ADD["`add_room()`"]
+        COMMAND2-->OP_ROOM_DEL["`del_room()`"]
+        COMMAND2-->OP_ROOM_MOD["`mod_room()`"]
+
+        OP_ROOM_QUERY-->ROOM_QUERY
+        OP_ROOM_QUERY-->ROOM_INFO
+        
+        OP_ROOM_ADD-->ROOM_QUERY
+        OP_ROOM_ADD-->ROOM_ADD
+
+        OP_ROOM_DEL-->ROOM_QUERY
+        OP_ROOM_DEL-->ROOM_DEL
+
+        OP_ROOM_MOD-->ROOM_QUERY
+        OP_ROOM_MOD-->ROOM_INFO
     end
 
     subgraph ui
         direction LR
         MENU["`menu()`"]-->OP1["`op_guest_list()`"]
         MENU-->OP2["`op_room_list()`"]
-
-        OP1-->COMMAND1["`command()`"]
-        COMMAND1-->GUEST_QUERY["`find&lt;Guest&gt;()`"]
-        COMMAND1-->ROOM_QUERY["`find_room()`"]
-        COMMAND1-->GUEST_ADD["`add&lt;Guest&gt;()`"]
-        COMMAND1-->GUEST_DEL["`del&lt;Guest&gt;()`"]
-        COMMAND1-->GUEST_MOD["`Guest.calc_cost()`"]
-        GUEST_QUERY-->GUEST_INFO["`Guest.print_info()`"]
-
-        OP2-->COMMAND2["`command()`"]
-        COMMAND2-->ROOM_QUERY["`find&lt;Room&gt;()`"]
-        COMMAND2-->ROOM_ADD["`add&lt;Room&gt;()`"]
-        COMMAND2-->ROOM_DEL["`del&lt;Room&gt;()`"]
-        ROOM_QUERY-->ROOM_INFO["`Room.print_info()`"]
+        OP1-->OP_GUEST
+        OP2-->OP_ROOM
     end
 
     init-->ui
+    ui-->END
 ```
 
 # 致谢

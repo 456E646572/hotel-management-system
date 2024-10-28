@@ -329,7 +329,7 @@ void modify_guest()
                 }
             } else {
                 p->data.checkout_time = time(0);
-                p->data.cost = ceil((p->data.checkout_time-p->data.checkin_time)/3600.0/24)*(p->data.room->data.cost);
+                p->data.calc_cost();
                 p->data.room->data.isOccupied = false;
                 success = true;
             }
@@ -500,6 +500,7 @@ void modify_room()
             p->data.type = new_type;
             success = true;
         } else if (item_id == "2") {
+            // WARNING :: 修改价格后用户的花费是否需要改变？
             cout << "请输入新的价格：";
             string new_cost;
             cin >> new_cost;
