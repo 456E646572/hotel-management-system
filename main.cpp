@@ -36,6 +36,15 @@ time_t string_to_time_t(string dateTimeStr) {
     return mktime(&tm);
 }
 
+// 检查身份证是否合法
+bool ID_is_valid(string ID) {
+    for (char c: ID) {
+        if ('0'<=c&&c<='9' || c=='X') { continue; }
+        else { return false; }
+    }
+    return ID.length()==18;
+}
+
 template<typename T>
 struct node {
     T data;
@@ -261,6 +270,10 @@ void add_guest()
     string guest_id, guest_name, room_id;
     cout << "请输入要添加的客人的身份证号：";
     cin >> guest_id;
+    if (!ID_is_valid(guest_id)) {
+        cout << "身份证不合法！" << endl;
+        return;
+    }
     auto p = find<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
     if (p != nullptr) { cout << "该客人已存在！" << endl; }
     else {
