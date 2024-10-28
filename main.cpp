@@ -16,16 +16,18 @@ const string GUESTFILE = "guest.txt";
 const string NULL_ROOM_ID = "0";
 const time_t MAX_TIME = -1;
 
+// 将 time_t 类型转换为字符串形式
 string time_t_to_string(time_t t) {
     if (t == MAX_TIME) { return "NOT_LEAVE"; }
     char buf[2005];
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&t));
     return string(buf);
 }
-
+ 
+// 将字符串形式的日期时间转换为 time_t 类型
 time_t string_to_time_t(string dateTimeStr) {
-    std::istringstream ss(dateTimeStr);
-    std::tm tm = {};
+    istringstream ss(dateTimeStr);
+    tm tm = {};
     ss >> get_time(&tm, "%Y-%m-%d %H:%M:%S");
     if (ss.fail()) {
         return MAX_TIME;
@@ -230,151 +232,286 @@ void init() {
     }
 }
 
-void op_guest_list() {
-    command();
-    string command_id;
-    cin >> command_id;
-    cout << "---------------------------------------------------" << endl;
-    if (command_id == "1") {
-        cout << "请输入查询条目（1.全部客人信息 2.指定客人信息）：";
-        int item_id;
-        cin >> item_id;
-        if (item_id == 1) {
+void query_guest()
+{
+    cout << "请输入查询条目（1.全部客人信息 2.指定客人信息）：";
+    int item_id;
+    cin >> item_id;
+    if (item_id == 1) {
+        cout << "---------------------------------------------------" << endl;
+        for (auto p=gl->nxt; p!= nullptr; p = p->nxt) {
+            p->data.output_info();
             cout << "---------------------------------------------------" << endl;
-            for (auto p=gl->nxt; p!= nullptr; p = p->nxt) {
-                p->data.output_info();
-                cout << "---------------------------------------------------" << endl;
-            }
-        } else if (item_id == 2) {
-            cout << "请输入要查询的客人身份证号：";
-            string guest_id;
-            cin >> guest_id;
-            auto p = find<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
-            if (p == nullptr) {
-                cout << "该客人不存在！" << endl;
-            } else {
-                p->data.output_info();
-            }
         }
-    } else if (command_id == "2") {
-        string guest_id, guest_name, room_id;
-        cout << "请输入要添加的客人的身份证号：";
-        cin >> guest_id;
-        auto p = find<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
-        if (p != nullptr) { cout << "该客人已存在！" << endl; }
-        else {
-            cout << "请输入要添加的客人的姓名：";
-            cin >> guest_name;
-            cout << "请输入要添加的客人的入住房号：";
-            cin >> room_id;
-            auto x = find_room(rl, room_id);
-            if (x == nullptr) {
-                cout << "该房间不存在！" << endl;
-            } else if (x->data.isOccupied) {
-                cout << "该房间已被占用！" << endl;
-            } else {
-                add<Guest>(gl, Guest{guest_id, guest_name, time(0), MAX_TIME, 0, x});
-                x->data.isOccupied = true;
-                cout << "客人信息已成功新增！" << endl;
-            }
-        }
-    } else if (command_id == "3") {
-        cout << "请输入要删除的客人身份证号：";
-        string guest_id;
-        cin >> guest_id;
-        auto p = find(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
-        if (del<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr})) {
-            p->data.room->data.isOccupied = false;
-            cout << "客人信息已成功删除！" << endl;
-        } else {
-            cout << "该客人不存在！" << endl;
-        }
-    } else if (command_id == "4") {
-        bool success = false;
-        cout << "请输入要修改的客人身份证号：";
+    } else if (item_id == 2) {
+        cout << "请输入要查询的客人身份证号：";
         string guest_id;
         cin >> guest_id;
         auto p = find<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
         if (p == nullptr) {
             cout << "该客人不存在！" << endl;
         } else {
-            cout << "请输入要修改的条目号（1.姓名 2.是否离开 3.入住时间 4.离店时间 5.住宿房间）：";
-            string item_id;
-            cin >> item_id;
-            if (item_id == "1") {
-                cout << "请输入新的姓名：";
-                string new_name;
-                cin >> new_name;
-                p->data.name = new_name;
-                success = true;
-            } else if (item_id == "2") {
-                if (p->data.checkout_time != MAX_TIME) {
-                    auto x = find_room(rl, p->data.room->data.ID);
-                    if (x == nullptr) {
-                        cout << "原房间不存在！" << endl;
-                    } else if (x->data.isOccupied) {
-                        cout << "原房间已被占用！" << endl;
-                    } else {
-                        p->data.checkout_time = MAX_TIME;
-                        p->data.cost = 0;
-                        p->data.room->data.isOccupied = true;
-                        success = true;
-                    }
-                } else {
-                    p->data.checkout_time = time(0);
-                    p->data.cost = ceil((p->data.checkout_time-p->data.checkin_time)/3600.0/24)*(p->data.room->data.cost);
-                    p->data.room->data.isOccupied = false;
-                    success = true;
-                }
-            } else if (item_id == "3") {
-                cout << "请输入新的入住时间（格式：YYYY-MM-DD HH:MM:SS）：";
-                string new_checkin_time;
-                cin.ignore();
-                getline(cin, new_checkin_time);
-                time_t new_checkin_time_t = string_to_time_t(new_checkin_time);
-                if (new_checkin_time_t == MAX_TIME) {
-                    cout << "时间格式不正确" << std::endl;
-                } else {
-                    p->data.checkin_time = new_checkin_time_t;
-                    p->data.calc_cost();
-                    success = true;
-                }
-            } else if (item_id == "4") {
-                cout << "请输入新的离店时间（格式：YYYY-MM-DD HH:MM:SS）：";
-                string new_checkout_time;
-                cin.ignore();
-                getline(cin, new_checkout_time);
-                time_t new_checkout_time_t = string_to_time_t(new_checkout_time);
-                if (new_checkout_time_t == MAX_TIME) {
-                    cout << "时间格式不正确" << std::endl;
-                } else {
-                    p->data.checkout_time = new_checkout_time_t;
-                    p->data.calc_cost();
-                    success = true;
-                }
-            } else if (item_id == "5") {
-                cout << "请输入新的住宿房间号：";
-                string new_room_id;
-                cin >> new_room_id;
-                auto x = find_room(rl, new_room_id);
+            p->data.output_info();
+        }
+    }
+}
+
+void add_guest()
+{
+    string guest_id, guest_name, room_id;
+    cout << "请输入要添加的客人的身份证号：";
+    cin >> guest_id;
+    auto p = find<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
+    if (p != nullptr) { cout << "该客人已存在！" << endl; }
+    else {
+        cout << "请输入要添加的客人的姓名：";
+        cin >> guest_name;
+        cout << "请输入要添加的客人的入住房号：";
+        cin >> room_id;
+        auto x = find_room(rl, room_id);
+        if (x == nullptr) {
+            cout << "该房间不存在！" << endl;
+        } else if (x->data.isOccupied) {
+            cout << "该房间已被占用！" << endl;
+        } else {
+            add<Guest>(gl, Guest{guest_id, guest_name, time(0), MAX_TIME, 0, x});
+            x->data.isOccupied = true;
+            cout << "客人信息已成功新增！" << endl;
+        }
+    }
+}
+
+void del_guest()
+{
+    cout << "请输入要删除的客人身份证号：";
+    string guest_id;
+    cin >> guest_id;
+    auto p = find(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
+    if (del<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr})) {
+        p->data.room->data.isOccupied = false;
+        cout << "客人信息已成功删除！" << endl;
+    } else {
+        cout << "该客人不存在！" << endl;
+    }
+}
+
+void modify_guest()
+{
+    bool success = false;
+    cout << "请输入要修改的客人身份证号：";
+    string guest_id;
+    cin >> guest_id;
+    auto p = find<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr});
+    if (p == nullptr) {
+        cout << "该客人不存在！" << endl;
+    } else {
+        cout << "请输入要修改的条目号（1.姓名 2.是否离开 3.入住时间 4.离店时间 5.住宿房间）：";
+        string item_id;
+        cin >> item_id;
+        if (item_id == "1") {
+            cout << "请输入新的姓名：";
+            string new_name;
+            cin >> new_name;
+            p->data.name = new_name;
+            success = true;
+        } else if (item_id == "2") {
+            if (p->data.checkout_time != MAX_TIME) {
+                auto x = find_room(rl, p->data.room->data.ID);
                 if (x == nullptr) {
-                    cout << "该房间不存在！" << endl;
+                    cout << "原房间不存在！" << endl;
                 } else if (x->data.isOccupied) {
-                    cout << "该房间已被占用！" << endl;
+                    cout << "原房间已被占用！" << endl;
                 } else {
-                    p->data.room->data.isOccupied = false;
-                    p->data.room = x;
-                    x->data.isOccupied = true;
+                    p->data.checkout_time = MAX_TIME;
+                    p->data.cost = 0;
+                    p->data.room->data.isOccupied = true;
                     success = true;
                 }
+            } else {
+                p->data.checkout_time = time(0);
+                p->data.cost = ceil((p->data.checkout_time-p->data.checkin_time)/3600.0/24)*(p->data.room->data.cost);
+                p->data.room->data.isOccupied = false;
+                success = true;
             }
-            if (success) {
-                cout << "修改成功！修改后的信息如下：" << endl;
-                p->data.output_info();
+        } else if (item_id == "3") {
+            cout << "请输入新的入住时间（格式：YYYY-MM-DD HH:MM:SS）：";
+            string new_checkin_time;
+            cin.ignore();
+            getline(cin, new_checkin_time);
+            time_t new_checkin_time_t = string_to_time_t(new_checkin_time);
+            if (new_checkin_time_t == MAX_TIME) {
+                cout << "时间格式不正确" << std::endl;
+            } else {
+                p->data.checkin_time = new_checkin_time_t;
+                p->data.calc_cost();
+                success = true;
+            }
+        } else if (item_id == "4") {
+            cout << "请输入新的离店时间（格式：YYYY-MM-DD HH:MM:SS）：";
+            string new_checkout_time;
+            cin.ignore();
+            getline(cin, new_checkout_time);
+            time_t new_checkout_time_t = string_to_time_t(new_checkout_time);
+            if (new_checkout_time_t == MAX_TIME) {
+                cout << "时间格式不正确" << std::endl;
+            } else {
+                p->data.checkout_time = new_checkout_time_t;
+                p->data.calc_cost();
+                success = true;
+            }
+        } else if (item_id == "5") {
+            cout << "请输入新的住宿房间号：";
+            string new_room_id;
+            cin >> new_room_id;
+            auto x = find_room(rl, new_room_id);
+            if (x == nullptr) {
+                cout << "该房间不存在！" << endl;
+            } else if (x->data.isOccupied) {
+                cout << "该房间已被占用！" << endl;
+            } else {
+                p->data.room->data.isOccupied = false;
+                p->data.room = x;
+                x->data.isOccupied = true;
+                success = true;
+            }
+        }
+        if (success) {
+            cout << "修改成功！修改后的信息如下：" << endl;
+            p->data.output_info();
+        }
+    }
+}
+
+void op_guest_list() {
+    command();
+    string command_id;
+    cin >> command_id;
+    cout << "---------------------------------------------------" << endl;
+    if (command_id == "1") {
+        query_guest();
+    } else if (command_id == "2") {
+        add_guest();
+    } else if (command_id == "3") {
+        del_guest();
+    } else if (command_id == "4") {
+        modify_guest();
+    } else {
+        cout << "输入错误，请重新输入！" << endl;
+    }
+}
+
+void query_room()
+{
+    cout << "请输入查询条目（1.全部房间信息 2.指定房间信息 3.指定价格区间）：";
+    int item_id;
+    cin >> item_id;
+    if (item_id == 1) {
+    cout << "---------------------------------------------------" << endl;
+        for (auto p=rl->nxt; p!= nullptr; p = p->nxt) {
+            p->data.output_info();
+            cout << "---------------------------------------------------" << endl;
+        }
+    } else if (item_id == 2) {
+        cout << "请输入要查询的房间号：";
+        string room_id;
+        cin >> room_id;
+        auto p = find<Room>(rl, Room{room_id, "", 0, false});
+        if (p == nullptr) {
+            cout << "该房间不存在！" << endl;
+        } else {
+            p->data.output_info();
+        }
+    } else if (item_id == 3) {
+        cout << "请输入价格区间（格式：min-max）：";
+        string price_range;
+        cin >> price_range;
+        double min_price, max_price;
+        int pos = price_range.find("-");
+        if (pos == string::npos) {
+            cout << "输入格式错误！" << endl;
+        } else {
+            min_price = stod(price_range.substr(0, pos));
+            max_price = stod(price_range.substr(pos+1));
+            if (min_price > max_price) { cout << "输入格式错误！" << endl; }
+            else {
+                cout << "---------------------------------------------------" << endl;
+                for (auto p=rl->nxt; p!= nullptr; p = p->nxt) {
+                    if (p->data.cost >= min_price && p->data.cost <= max_price) {
+                        p->data.output_info();
+                        cout << "---------------------------------------------------" << endl;
+                    }
+                }
             }
         }
     } else {
         cout << "输入错误，请重新输入！" << endl;
+    }
+}
+
+void add_room()
+{
+    cout << "请输入要新增的房间信息：" << endl;
+    string room_id, room_type, cost;
+    cout << "请输入房间号：";
+    cin >> room_id;
+    auto p = find(rl, Room{room_id, "", 0, false});
+    if (p != nullptr) { cout << "该房间已存在！" << endl; }
+    else {
+        cout << "请输入房间类型：";
+        cin >> room_type;
+        cout << "请输入房间价格：";
+        cin >> cost;
+        try {
+            add<Room>(rl, Room{room_id, room_type, stod(cost), false});
+            cout << "房间信息已成功新增！" << endl;                
+        } catch (...) { cout << "价格格式错误！" << endl; }
+    }
+}
+
+void del_room()
+{
+    cout << "请输入要删除的房间ID：";
+    string room_id;
+    cin >> room_id;
+    if (del<Room>(rl, Room{room_id, "", 0, false})) {
+        cout << "房间信息已成功删除！" << endl;
+    } else {
+        cout << "该房间不存在！" << endl;
+    }
+}
+
+void modify_room()
+{
+    cout << "请输入要修改的房间号：";
+    string room_id;
+    cin >> room_id;
+    auto p = find(rl, Room{room_id, "", 0, false});
+    if (p == nullptr) {
+        cout << "该房间不存在！" << endl;
+    } else {
+        bool success = false;
+        cout << "请输入要修改的条目号（1.类型 2.价格）：";
+        string item_id;
+        cin >> item_id;
+        if (item_id == "1") {
+            cout << "请输入新的类型：";
+            string new_type;
+            cin >> new_type;
+            p->data.type = new_type;
+            success = true;
+        } else if (item_id == "2") {
+            cout << "请输入新的价格：";
+            string new_cost;
+            cin >> new_cost;
+            try {
+                p->data.cost = stod(new_cost);
+                success = true;
+            } catch (...) { cout << "价格格式错误！" << endl; }
+        }
+        if (success) {
+            cout << "修改成功！修改后的信息如下：" << endl;
+            p->data.output_info();
+        }
     }
 }
 
@@ -384,108 +521,13 @@ void op_room_list() {
     cin >> command_id;
     cout << "---------------------------------------------------" << endl;
     if (command_id == "1") {
-        cout << "请输入查询条目（1.全部房间信息 2.指定房间信息 3.指定价格区间）：";
-        int item_id;
-        cin >> item_id;
-        if (item_id == 1) {
-        cout << "---------------------------------------------------" << endl;
-            for (auto p=rl->nxt; p!= nullptr; p = p->nxt) {
-                p->data.output_info();
-                cout << "---------------------------------------------------" << endl;
-            }
-        } else if (item_id == 2) {
-            cout << "请输入要查询的房间号：";
-            string room_id;
-            cin >> room_id;
-            auto p = find<Room>(rl, Room{room_id, "", 0, false});
-            if (p == nullptr) {
-                cout << "该房间不存在！" << endl;
-            } else {
-                p->data.output_info();
-            }
-        } else if (item_id == 3) {
-            cout << "请输入价格区间（格式：min-max）：";
-            string price_range;
-            cin >> price_range;
-            double min_price, max_price;
-            int pos = price_range.find("-");
-            if (pos == string::npos) {
-                cout << "输入格式错误！" << endl;
-            } else {
-                min_price = stod(price_range.substr(0, pos));
-                max_price = stod(price_range.substr(pos+1));
-                if (min_price > max_price) { cout << "输入格式错误！" << endl; }
-                else {
-                    cout << "---------------------------------------------------" << endl;
-                    for (auto p=rl->nxt; p!= nullptr; p = p->nxt) {
-                        if (p->data.cost >= min_price && p->data.cost <= max_price) {
-                            p->data.output_info();
-                            cout << "---------------------------------------------------" << endl;
-                        }
-                    }
-                }
-            }
-        } else {
-            cout << "输入错误，请重新输入！" << endl;
-        }
+        query_room();
     } else if (command_id == "2") {
-        cout << "请输入要新增的房间信息：" << endl;
-        string room_id, room_type, cost;
-        cout << "请输入房间号：";
-        cin >> room_id;
-        auto p = find(rl, Room{room_id, "", 0, false});
-        if (p != nullptr) { cout << "该房间已存在！" << endl; }
-        else {
-            cout << "请输入房间类型：";
-            cin >> room_type;
-            cout << "请输入房间价格：";
-            cin >> cost;
-            try {
-                add<Room>(rl, Room{room_id, room_type, stod(cost), false});
-                cout << "房间信息已成功新增！" << endl;                
-            } catch (...) { cout << "价格格式错误！" << endl; }
-        }
+        add_room();
     } else if (command_id == "3") {
-        cout << "请输入要删除的房间ID：";
-        string room_id;
-        cin >> room_id;
-        if (del<Room>(rl, Room{room_id, "", 0, false})) {
-            cout << "房间信息已成功删除！" << endl;
-        } else {
-            cout << "该房间不存在！" << endl;
-        }
+        del_room();
     } else if (command_id == "4") {
-        cout << "请输入要修改的房间号：";
-        string room_id;
-        cin >> room_id;
-        auto p = find(rl, Room{room_id, "", 0, false});
-        if (p == nullptr) {
-            cout << "该房间不存在！" << endl;
-        } else {
-            bool success = false;
-            cout << "请输入要修改的条目号（1.类型 2.价格）：";
-            string item_id;
-            cin >> item_id;
-            if (item_id == "1") {
-                cout << "请输入新的类型：";
-                string new_type;
-                cin >> new_type;
-                p->data.type = new_type;
-                success = true;
-            } else if (item_id == "2") {
-                cout << "请输入新的价格：";
-                string new_cost;
-                cin >> new_cost;
-                try {
-                    p->data.cost = stod(new_cost);
-                    success = true;
-                } catch (...) { cout << "价格格式错误！" << endl; }
-            }
-            if (success) {
-                cout << "修改成功！修改后的信息如下：" << endl;
-                p->data.output_info();
-            }
-        }
+        modify_room();
     }
 }
 
