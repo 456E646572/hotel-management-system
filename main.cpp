@@ -290,6 +290,7 @@ void add_guest()
             add<Guest>(gl, Guest{guest_id, guest_name, time(0), MAX_TIME, 0, x});
             x->data.isOccupied = true;
             cout << "客人信息已成功新增！" << endl;
+            write<Guest>(GUESTFILE, gl);
         }
     }
 }
@@ -303,6 +304,7 @@ void del_guest()
     if (del<Guest>(gl, Guest{guest_id, "", 0, 0, 0, nullptr})) {
         p->data.room->data.isOccupied = false;
         cout << "客人信息已成功删除！" << endl;
+        write<Room>(ROOMFILE, rl);
     } else {
         cout << "该客人不存在！" << endl;
     }
@@ -391,6 +393,7 @@ void modify_guest()
         if (success) {
             cout << "修改成功！修改后的信息如下：" << endl;
             p->data.output_info();
+            write<Guest>(GUESTFILE, gl);
         }
     }
 }
@@ -476,7 +479,8 @@ void add_room()
         cin >> cost;
         try {
             add<Room>(rl, Room{room_id, room_type, stod(cost), false});
-            cout << "房间信息已成功新增！" << endl;                
+            cout << "房间信息已成功新增！" << endl;   
+            write<Room>(ROOMFILE, rl);
         } catch (...) { cout << "价格格式错误！" << endl; }
     }
 }
@@ -488,6 +492,7 @@ void del_room()
     cin >> room_id;
     if (del<Room>(rl, Room{room_id, "", 0, false})) {
         cout << "房间信息已成功删除！" << endl;
+        write<Room>(ROOMFILE, rl);
     } else {
         cout << "该房间不存在！" << endl;
     }
@@ -525,6 +530,7 @@ void modify_room()
         if (success) {
             cout << "修改成功！修改后的信息如下：" << endl;
             p->data.output_info();
+            write<Room>(ROOMFILE, rl);
         }
     }
 }
