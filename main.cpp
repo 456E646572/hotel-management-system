@@ -15,12 +15,13 @@ const string ROOMFILE = "room.txt";
 const string GUESTFILE = "guest.txt";
 const string NULL_ROOM_ID = "HERE_IS_NULL_AND_YOU_CANT_USE_IT_AS_ROOM_ID";
 const time_t MAX_TIME = -1;
+const char *TIME_FORMAT = "%Y/%m/%d-%H:%M:%S";
 
 // 将 time_t 类型转换为字符串形式
 string time_t_to_string(time_t t) {
     if (t == MAX_TIME) { return "NOT_LEAVE"; }
     char buf[2005];
-    strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", localtime(&t));
+    strftime(buf, sizeof(buf), TIME_FORMAT, localtime(&t));
     return string(buf);
 }
  
@@ -28,7 +29,7 @@ string time_t_to_string(time_t t) {
 time_t string_to_time_t(string dateTimeStr) {
     istringstream ss(dateTimeStr);
     tm tm = {};
-    ss >> get_time(&tm, "%Y-%m-%d %H:%M:%S");
+    ss >> get_time(&tm, TIME_FORMAT);
     if (ss.fail()) {
         return MAX_TIME;
     }
@@ -79,7 +80,10 @@ struct Room {
     }
     // 输出房间信息到文件
     void output_info(ofstream& f) {
-        f << ID << " " << type << " " << cost << endl;
+        if(isOccupied)
+            f << ID << " " << type << " " << cost << " 1" << endl;
+        else
+            f << ID << " " << type << " " << cost << " 0" << endl;
     }
 };
 using RoomList = shared_ptr<node<Room>>;
@@ -87,7 +91,6 @@ RoomList rl = make_shared<node<Room>>();
  
 // 在房间列表中查找指定ID的房间
 RoomList find_room (RoomList rl, string ID) {
-    if (ID == NULL_ROOM_ID) { return nullptr; }
     for (auto p = rl->nxt; p!= nullptr; p = p->nxt) {
         if (p->data.ID == ID) {
             return p;
@@ -113,8 +116,8 @@ struct Guest {
         switch (att_id) {
             case 0: ID = att; break;
             case 1: name = att; break;
-            case 2: checkin_time = stod(att); break;
-            case 3: checkout_time = stod(att); break;
+            case 2: {att = to_string(string_to_time_t(att)); checkin_time = stod(att); break;}
+            case 3: {att = to_string(string_to_time_t(att));checkout_time = stod(att); break;}
             case 4: cost = stod(att); break;
             case 5: room = find_room(rl, att); break;
             default: break;
@@ -137,7 +140,7 @@ struct Guest {
     }
     // 输出客人信息到文件
     void output_info(ofstream& f) {
-        f << ID << " " << name << " " << checkin_time << " " << checkout_time << " " << cost << " " << (room == nullptr? NULL_ROOM_ID : room->data.ID) << endl;
+        f << ID << " " << name << " " << time_t_to_string(checkin_time) << " " << time_t_to_string(checkout_time) << " " << cost << " " << (room == nullptr? NULL_ROOM_ID : room->data.ID) << endl;
     }
 };
 using GuestList = shared_ptr<node<Guest>>;
