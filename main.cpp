@@ -13,7 +13,7 @@ using namespace std;
 
 const string ROOMFILE = "room.txt";
 const string GUESTFILE = "guest.txt";
-const string NULL_ROOM_ID = "0";
+const string NULL_ROOM_ID = "HERE_IS_NULL_AND_YOU_CANT_USE_IT_AS_ROOM_ID";
 const time_t MAX_TIME = -1;
 
 // 将 time_t 类型转换为字符串形式
