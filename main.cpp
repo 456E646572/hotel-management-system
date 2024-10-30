@@ -126,7 +126,7 @@ struct Guest {
     // 计算住宿费用
     void calc_cost() {
         if (checkout_time != MAX_TIME) {
-            cost = (checkout_time-checkin_time)/3600.0*(room->data.cost);
+            cost = ceil((checkout_time-checkin_time)/3600.0)*(room->data.cost);
         }
     }
     // 输出客人信息到控制台
