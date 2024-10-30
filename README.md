@@ -76,8 +76,8 @@ flowchart TD
     ROOM_DEL-->END_TURN
     ROOM_MOD-->END_TURN  
 
-    END_TURN-->NEICUN[修改写入内存]-->A
-    SAVE[写入文件]-->END[退出系统]
+    END_TURN-->SAVE-->|尚未退出系统|A
+    SAVE[写入文件]-->|已退出系统|END[退出系统]
 ```
 
 # 数据结构示意图
